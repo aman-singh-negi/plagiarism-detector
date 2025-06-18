@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+
+{% block content %}
+<motion.div class="results-container" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+    <div class="results-header">
+        <h2><i class="fas fa-chart-bar"></i> Analysis Results</h2>
+        <div class="result-meta">
+            <span><i class="fas fa-calendar-alt"></i> {{ timestamp }}</span>
+        </div>
+    </div>
+    
+    <div class="similarity-score-container">
+        <div class="similarity-score">
+            <div class="score-value" id="similarity-value">{{ (results.score * 100)|round(1) }}%</div>
+            <div class="score-label">Overall Similarity</div>
+        </div>
+        
+        <div class="progress-container">
+            <div class="progress-bar">
+                <div id="similarity-bar" class="progress-fill" 
+                     style="width: {{ results.score * 100 }}%; 
+                            background: {% if results.score > 0.75 %}var(--danger)
+                            {% elif results.score > 0.5 %}var(--warning)
+                            {% elif results.score > 0.25 %}var(--info)
+                            {% else %}var(--success){% endif %};">
+                </div>
+            </div>
+            <div class="progress-labels">
+                <span>0%</span>
+                <span>100%</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="results-grid">
+        <div class="file-comparison">
+            <h3><i class="fas fa-file-alt"></i> File Comparison</h3>
+            <div class="file-previews">
+                <div class="file-preview">
+                    <div class="file-header">
+                        <h4>{{ file1_name }}</h4>
+                        <span class="file-type">{{ file1_name.split('.')[-1]|upper }} file</span>
+                    </div>
+                    <div class="file-content">
+                        <pre>{{ file1_preview }}</pre>
+                    </div>
+                </div>
+                
+                <div class="file-preview">
+                    <div class="file-header">
+                        <h4>{{ file2_name }}</h4>
+                        <span class="file-type">{{ file2_name.split('.')[-1]|upper }} file</span>
+                    </div>
+                    <div class="file-content">
+                        <pre>{{ file2_preview }}</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="metrics-section">
+            <h3><i class="fas fa-tachometer-alt"></i> Detailed Metrics</h3>
+            <div class="metrics-grid">
+                {% for name, value in results.details.items() %}
+                <div class="metric-card">
+                    <div class="metric-icon">
+                        {% if name == 'jaccard' %}
+                        <i class="fas fa-venus-double"></i>
+                        {% elif name == 'cosine' %}
+                        <i class="fas fa-vector-square"></i>
+                        {% elif name == 'levenshtein' %}
+                        <i class="fas fa-edit"></i>
+                        {% elif name == 'minhash' %}
+                        <i class="fas fa-fingerprint"></i>
+                        {% elif name == 'semantic' %}
+                        <i class="fas fa-brain"></i>
+                        {% else %}
+                        <i class="fas fa-ruler"></i>
+                        {% endif %}
+                    </div>
+                    <div class="metric-info">
+                        <h4>{{ name.replace('_', ' ')|title }}</h4>
+                        <div class="metric-value">{{ (value * 100)|round(1) }}%</div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="visualization-section">
+        <div class="heatmap-container">
+            <h3><i class="fas fa-th"></i> Similarity Heatmap</h3>
+            <div id="heatmap"></div>
+            <div class="heatmap-legend">
+                <span>Low Similarity</span>
+                <div class="legend-gradient"></div>
+                <span>High Similarity</span>
+            </div>
+        </div>
+        
+        {% if results.matched_sections %}
+        <div class="matched-sections">
+            <h3><i class="fas fa-code-compare"></i> Matched Sections</h3>
+            <div class="matches-container">
+                {% for match in results.matched_sections %}
+                <div class="match-item">
+                    <div class="match-header">
+                        <span class="similarity-badge">{{ (match.similarity * 100)|round(1) }}% match</span>
+                        <span class="size-badge">{{ match.size }} chars</span>
+                    </div>
+                    <div class="match-content">
+                        <div class="match-side">
+                            <span class="file-label">File 1 (Lines {{ match.text1_start }}-{{ match.text1_end }})</span>
+                            <pre class="match-text">{{ file1_preview[match.text1_start:match.text1_end] }}</pre>
+                        </div>
+                        <div class="match-side">
+                            <span class="file-label">File 2 (Lines {{ match.text2_start }}-{{ match.text2_end }})</span>
+                            <pre class="match-text">{{ file2_preview[match.text2_start:match.text2_end] }}</pre>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="actions">
+        <button id="export-pdf" class="btn export-btn">
+            <i class="fas fa-file-pdf"></i> Export PDF Report
+        </button>
+        <button id="new-analysis" class="btn">
+            <i class="fas fa-redo"></i> New Analysis
+        </button>
+    </div>
+</motion.div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Initialize heatmap
+    const heatmapData = {{ results.heatmap|tojson|safe }};
+    renderHeatmap(heatmapData);
+    
+    // Animate score counter
+    const targetScore = {{ (results.score * 100)|round(1) }};
+    const scoreElement = document.getElementById('similarity-value');
+    let currentScore = 0;
+    
+    const scoreInterval = setInterval(() => {
+        currentScore += 1;
+        scoreElement.textContent = currentScore + '%';
+        
+        if (currentScore >= targetScore) {
+            clearInterval(scoreInterval);
+        }
+    }, 20);
+    
+    // PDF Export
+    document.getElementById('export-pdf').addEventListener('click', () => {
+        const btn = document.getElementById('export-pdf');
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+        btn.disabled = true;
+        
+        const data = {
+            results: {{ results|tojson|safe }},
+            file1_preview: {{ file1_preview|tojson|safe }},
+            file2_preview: {{ file2_preview|tojson|safe }},
+            file1_name: {{ file1_name|tojson|safe }},
+            file2_name: {{ file2_name|tojson|safe }},
+            timestamp: {{ timestamp|tojson|safe }}
+        };
+        
+        fetch('/export/pdf', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.blob())
+        .then(blob => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'plagiarism_report.pdf';
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+        })
+        .catch(error => {
+            alert('Error generating PDF: ' + error.message);
+        })
+        .finally(() => {
+            btn.innerHTML = '<i class="fas fa-file-pdf"></i> Export PDF Report';
+            btn.disabled = false;
+        });
+    });
+    
+    // New Analysis button
+    document.getElementById('new-analysis').addEventListener('click', () => {
+        window.location.href = '/';
+    });
+</script>
+{% endblock %}

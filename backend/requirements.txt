@@ -1,0 +1,16 @@
+flask
+flask_cors
+waitress
+nltk
+numpy
+scikit-learn
+PyPDF2
+python-docx
+bs4
+fpdf
+Levenshtein
+sentence-transformers
+datasketch
+javalang
+clang
+config

@@ -1,0 +1,54 @@
+[data-theme="light"] {
+  --text-primary: #212529;
+  --text-secondary: #495057;
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8f9fa;
+  --border-color: #dee2e6;
+  --highlight-color: rgba(67, 97, 238, 0.05);
+}
+
+[data-theme="light"] .upload-container,
+[data-theme="light"] .results-container {
+  background: var(--bg-secondary);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--border-color);
+}
+
+[data-theme="light"] #drop-area {
+  border: 2px dashed var(--border-color);
+  background-color: var(--bg-primary);
+}
+
+[data-theme="light"] #drop-area.highlight {
+  border-color: var(--primary);
+  background-color: var(--highlight-color);
+}
+
+[data-theme="light"] .file-inputs label {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+}
+
+[data-theme="light"] .file-inputs label:hover {
+  background: #e9ecef;
+}
+
+[data-theme="light"] .heatmap-container {
+  background: linear-gradient(90deg, var(--bg-secondary), #dee2e6);
+  border: 1px solid var(--border-color);
+}
+
+[data-theme="light"] .metric-card {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+}
+
+[data-theme="light"] .file-preview {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+}
+
+[data-theme="light"] pre {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+}
