@@ -3,7 +3,6 @@ from sklearn.metrics.pairwise import cosine_similarity
 from Levenshtein import distance as levenshtein_distance
 from datasketch import MinHash
 from sentence_transformers import CrossEncoder
-import numpy as np
 from difflib import SequenceMatcher
 
 class TextAnalyzer:

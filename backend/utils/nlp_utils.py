@@ -1,14 +1,11 @@
 import nltk
+nltk.data.path.append('./nltk_data')  # This makes it use your local folder
+
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize, sent_tokenize
 from nltk.stem import WordNetLemmatizer
 import string
 import re
-
-# Download required NLTK data
-nltk.download('punkt')
-nltk.download('stopwords')
-nltk.download('wordnet')
 
 class NLPPipeline:
     def __init__(self):
